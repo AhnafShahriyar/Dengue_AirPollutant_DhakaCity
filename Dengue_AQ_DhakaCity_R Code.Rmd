@@ -34,11 +34,13 @@ library(mgcv)
 library(Hmisc)  # For rcorr function
 library(corrplot)  # For visualization
 # library(tidyverse)  # For data manipulation
+library(ggplot2)
+library(e1071)
 ```
 
 ```{r}
 library(readxl)
-df <- read_excel("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Data/Daily_Dengue_Climate_PollutionDataDhakaCity_2016_2024.xlsx")
+df <- read_excel("data.xlsx")
 ```
 
 
@@ -63,16 +65,6 @@ df$Population <- as.numeric(df$Population)
 df$log_pop <- as.numeric(df$log_pop)
 ```
 
-```{r}
-# Load necessary libraries
-library(ggplot2)
-library(e1071)
-```
-
-
-```{r}
-```
-
 
 ```{r}
 library(reshape2)
@@ -90,11 +82,11 @@ df$NO2_log <- log1p(df$NO2)
 df$NO_log <- log1p(df$NO)
 df$CO_log <- log1p(df$CO)
 df$O3_log <- log1p(df$O3)
-df$PM25_log <- log1p(df$`PM2.5`)   # Use backticks for names with dot
+df$PM25_log <- log1p(df$`PM2.5`)   
 df$PM10_log <- log1p(df$PM10)
 
 
-# (Optional) square root transformations if log is too aggressive
+# (Optional) square root transformations 
 df$DengueCases_sqrt <- sqrt(df$DengueCases)
 df$HeatWaveDays_sqrt <- sqrt(df$HeatWaveDays)
 df$MeanT_sqrt <- sqrt(df$MeanT)
@@ -112,24 +104,6 @@ df$PM10_sqrt <- sqrt(df$PM10)
 
 
 ```{r}
-# Select only numeric columns from the data frame
-numeric_df <- df[sapply(df, is.numeric)]
-
-# Calculate the median for each numeric column
-medians <- apply(numeric_df, 2, median, na.rm = TRUE)
-
-# Print the medians
-print(medians)
-
-
-```
-
-
-
-```{r}
-# install.packages("e1071")   # only once
-library(e1071)
-
 skewness(df[[var]], na.rm = TRUE)
 
 vars <- c("DengueCases", "MeanT","TotalRain", "AvgHum", "WindSp_mph", "SO2", "NO2", "NO", "CO", "O3", "PM2.5", "PM10")
@@ -144,106 +118,9 @@ for (var in vars) {
 ```
 
 
-
-```{r}
-library(dlnm)
-library(splines)
-library(MASS)
-
-# Safe quasi-AIC function
-qAIC <- function(model) {
-  ll <- tryCatch(logLik(model), error = function(e) NA)
-  if (is.na(ll)) return(NA)
-  k <- attr(ll, "df")
-  return(-2 * as.numeric(ll) + 2 * k)
-}
-
-# Variable grouping
-met_vars <- c("HeatWaveDays", "MeanT", "AvgHum", "TotalRain_log", "WindSp_mph", "SolarRad")
-pol_vars <- c("SO2_log", "NO2_sqrt", "CO_sqrt", "O3_log", "PM2.5_sqrt")
-
-# Time covariate spline
-df$DOS <- as.numeric(df$DOS)
-ns.time <- ns(df$DOS, df = 21)
-
-# Convert categorical variables to factors
-df$Month <- as.factor(df$Month)
-df$DOW <- as.factor(df$DOW)
-df$Holiday <- as.factor(df$Holiday)
-
-# Output list
-results <- list()
-
-# Loop over each predictor
-for (var in c(met_vars, pol_vars)) {
-  
-  is_met <- var %in% met_vars
-  max_lag <- ifelse(is_met, 30, 10)
-  
-  best_qAIC <- Inf
-  best_combo <- NULL
-  
-  cat("\nEvaluating:", var, "\n")
-  
-  for (var_df in 2:3) {
-    for (lag_df in 2:3) {
-      
-      # Build cross-basis
-      cb <- tryCatch({
-        crossbasis(df[[var]], lag = max_lag,
-                   argvar = list(fun = "ns", df = var_df),
-                   arglag = list(fun = "ns", df = lag_df))
-      }, error = function(e) NULL)
-      
-      if (is.null(cb)) next
-      
-      # Fit model
-      model <- tryCatch({
-        glm(DengueCases ~ cb + ns.time + Month + DOW + Holiday,
-            family = quasipoisson(), data = df)
-      }, error = function(e) NULL)
-      
-      if (is.null(model)) next
-      
-      # Compute qAIC
-      q <- qAIC(model)
-      cat("var_df:", var_df, "lag_df:", lag_df, "qAIC:", round(q, 2), "\n")
-      
-      if (!is.na(q) && q < best_qAIC) {
-        best_qAIC <- q
-        best_combo <- list(var = var, var_df = var_df, lag_df = lag_df, qAIC = q)
-      }
-    }
-  }
-  
-  results[[var]] <- best_combo
-}
-
-# Print final result
-cat("\nBest DOF combinations by variable:\n")
-print(results)
-
-```
-
-
-```{r}
-# plot(df$HeatWaveDays_log, df$DengueCases_sqrt)
-# nonzero_hw <- df$HeatWaveDays[df$HeatWaveDays > 0]
-# nonzero_hw_log <- df$HeatWaveDays_log[df$HeatWaveDays_log > 0]
-nonzero_rain <- df$TotalRain[df$TotalRain > 0]
-# quantile(nonzero_hw, probs = c(0.33, 0.66))  # tertiles
-# quantile(nonzero_hw_log, probs = c(0.33, 0.66))
-quantile(nonzero_rain, probs = c(0.33, 0.66))
-
-# library(splines)
-# ns(df$HeatWaveDays, df = 3)
-
-```
-
-
 ________________________________________________________________________________
 
-#Crossbasis Meteorological Factors (lag = Mlag, df for value/lag = Mdof, knots = Mknots)
+#ns Meteorological Factors (lag = Mlag, df for value/lag = Mdof, knots = Mknots)
 ```{r}
 Mlag <- 48
 Mdof <- 3
@@ -343,26 +220,6 @@ cb_PM10 <- crossbasis(df$PM10, lag=Plag,
 
 =========================================================
 ```{r}
-model <- glm(DengueCases_log ~ 
-                      cb_MeanT + 
-                      cb_AvgHum + 
-                      cb_TotalRain_log + 
-                      cb_WindSp_mph + 
-                      cb_SO2_log + 
-                      cb_NO2_log + 
-                      #cb_NO_log + 
-                      cb_CO_log + 
-                      cb_O3_log + 
-                      cb_PM25_log + 
-                      ns(DOS, df=3*9) + 
-                      factor(Month) + 
-                      factor(DOW) + 
-                      factor(Holiday) + offset(log(Population)), 
-                    family=quasipoisson(), data = df)
-```
-
-
-```{r}
 model <- glm.nb(DengueCases ~ 
                       # cb_MaxT +
                       cb_MeanT +
@@ -437,11 +294,11 @@ repeat {
 summary(model)
 
 ```
+
 ```{r}
 step_model <- stepAIC(model, direction = "backward")
 summary(step_model)
 ```
-
 
 ```{r}
 summary(model)
@@ -470,474 +327,7 @@ gvif_values <- vif(model)
 print(gvif_values)
 ```
 
-```{r}
-alias(model)            # shows which variables are linear combinations of which
-summary(model)          # aliased coefficients show as NA
-names(which(is.na(coef(model))))   # lists them directly
-```
-
-
 =========================================================
-
-#backward_elimination_quasi
-```{r}
-# Corrected function for backward elimination with quasipoisson
-backward_elimination_quasi <- function(model, alpha = 0.05) {
-  
-  # Variables to protect (always keep in model) - use base names
-  protected_vars <- c("ns(DOS, df = 7 * 6)", "factor(Month)", 
-                     "factor(DOW)", "factor(Holiday)")
-  
-  while(TRUE) {
-    # Get summary of current model
-    model_summary <- summary(model)
-    
-    # Get coefficient names and p-values
-    coef_names <- rownames(model_summary$coefficients)
-    p_values <- model_summary$coefficients[, 4]  # 4th column contains p-values
-    
-    # Remove intercept from consideration
-    non_intercept_indices <- which(coef_names != "(Intercept)")
-    
-    if(length(non_intercept_indices) == 0) {
-      cat("No more variables can be removed.\n")
-      break
-    }
-    
-    # Group coefficients by their base variable names
-    # Extract base variable names (before any numbers or factor levels)
-    base_var_names <- character(length(coef_names))
-    
-    for(i in 1:length(coef_names)) {
-      name <- coef_names[i]
-      
-      # Handle crossbasis variables
-      if(grepl("^cb_", name)) {
-        base_var_names[i] <- gsub("^(cb_[^0-9.]+).*", "\\1", name)
-      }
-      # Handle ns() terms
-      else if(grepl("^ns\\(", name)) {
-        base_var_names[i] <- gsub("^(ns\\([^)]+\\)).*", "\\1", name)
-      }
-      # Handle factor terms
-      else if(grepl("^factor\\(", name)) {
-        base_var_names[i] <- gsub("^(factor\\([^)]+\\)).*", "\\1", name)
-      }
-      # Handle other terms
-      else {
-        base_var_names[i] <- name
-      }
-    }
-    
-    # Find which variables can be removed (not protected and not intercept)
-    removable_mask <- !base_var_names %in% c("(Intercept)", protected_vars) & 
-                      coef_names != "(Intercept)"
-    
-    if(sum(removable_mask) == 0) {
-      cat("No more variables can be removed (all remaining are protected).\n")
-      break
-    }
-    
-    # For each unique base variable, find the maximum p-value among its terms
-    unique_base_vars <- unique(base_var_names[removable_mask])
-    max_p_by_var <- numeric(length(unique_base_vars))
-    names(max_p_by_var) <- unique_base_vars
-    
-    for(var in unique_base_vars) {
-      var_indices <- which(base_var_names == var & removable_mask)
-      max_p_by_var[var] <- max(p_values[var_indices], na.rm = TRUE)
-    }
-    
-    # Find variable with highest maximum p-value
-    overall_max_p <- max(max_p_by_var, na.rm = TRUE)
-    
-    # If all remaining variables are significant, stop
-    if(overall_max_p <= alpha) {
-      cat("All remaining variables are significant at alpha =", alpha, "\n")
-      break
-    }
-    
-    # Find variable to remove
-    var_to_remove <- names(max_p_by_var)[which.max(max_p_by_var)]
-    
-    cat("Removing:", var_to_remove, "with max p-value:", overall_max_p, "\n")
-    
-    # Get current model terms
-    current_terms <- attr(terms(model), "term.labels")
-    
-    # Find the exact term to remove from the model terms
-    term_to_remove <- current_terms[grepl(paste0("^", gsub("([\\[\\]\\(\\)\\*\\+\\?\\^\\$\\|\\\\])", "\\\\\\1", var_to_remove)), current_terms)]
-    
-    if(length(term_to_remove) == 0) {
-      # If exact match not found, try alternative matching
-      if(grepl("^cb_", var_to_remove)) {
-        term_to_remove <- current_terms[grepl(paste0("^", gsub("([\\[\\]\\(\\)\\*\\+\\?\\^\\$\\|\\\\])", "\\\\\\1", var_to_remove)), current_terms)]
-      }
-    }
-    
-    if(length(term_to_remove) > 0) {
-      # Update model formula by removing the term
-      current_formula <- formula(model)
-      new_formula <- update(current_formula, paste(". ~ . -", "`", term_to_remove[1], "`", sep=""))
-      
-      # Fit new model
-      tryCatch({
-        model <- glm(new_formula, family = quasipoisson(), data = df)
-      }, error = function(e) {
-        cat("Error updating model:", e$message, "\n")
-        cat("Trying alternative removal method...\n")
-        
-        # Alternative: rebuild formula manually
-        remaining_terms <- current_terms[!current_terms %in% term_to_remove]
-        new_formula_str <- paste("DengueCases_sqrt ~", paste(remaining_terms, collapse = " + "))
-        new_formula <- as.formula(new_formula_str)
-        model <<- glm(new_formula, family = quasipoisson(), data = df)
-      })
-    } else {
-      cat("Could not find term to remove. Stopping.\n")
-      break
-    }
-  }
-  
-  return(model)
-}
-
-# Apply backward elimination
-final_model <- backward_elimination_quasi(model, alpha = 0.05)
-summary(final_model)
-```
-
-```{r}
-# Simpler approach - manually check p-values and rebuild model
-manual_backward_elimination <- function(model, alpha = 0.05) {
-  
-  current_model <- model
-  
-  # Get all terms from original model
-  all_terms <- attr(terms(model), "term.labels")
-  
-  # Protected terms that should always stay
-  protected_terms <- c("ns(DOS, df = 7 * 6)", "factor(Month)", 
-                      "factor(DOW)", "factor(Holiday)")
-  
-  # Terms available for removal
-  removable_terms <- setdiff(all_terms, protected_terms)
-  
-  while(length(removable_terms) > 0) {
-    
-    # Get model summary
-    model_summary <- summary(current_model)
-    
-    # Calculate significance for each removable term
-    term_significance <- numeric(length(removable_terms))
-    names(term_significance) <- removable_terms
-    
-    for(term in removable_terms) {
-      # Find coefficients related to this term
-      coef_names <- rownames(model_summary$coefficients)
-      
-      if(grepl("^cb_", term)) {
-        # For crossbasis terms, find all related coefficients
-        related_coefs <- coef_names[grepl(paste0("^", gsub("([\\[\\]\\(\\)\\*\\+\\?\\^\\$\\|\\\\])", "\\\\\\1", term)), coef_names)]
-      } else {
-        # For other terms, find related coefficients
-        related_coefs <- coef_names[grepl(gsub("([\\[\\]\\(\\)\\*\\+\\?\\^\\$\\|\\\\])", "\\\\\\1", term), coef_names)]
-      }
-      
-      if(length(related_coefs) > 0) {
-        # Get p-values for related coefficients
-        p_vals <- model_summary$coefficients[related_coefs, 4]
-        # Use maximum p-value (least significant)
-        term_significance[term] <- max(p_vals, na.rm = TRUE)
-      } else {
-        term_significance[term] <- 0  # Keep in model if can't find
-      }
-    }
-    
-    # Find term with highest p-value
-    max_p_value <- max(term_significance, na.rm = TRUE)
-    
-    # Check if we should stop
-    if(max_p_value <= alpha) {
-      cat("All remaining variables are significant at alpha =", alpha, "\n")
-      break
-    }
-    
-    # Remove term with highest p-value
-    term_to_remove <- names(term_significance)[which.max(term_significance)]
-    cat("Removing:", term_to_remove, "with max p-value:", max_p_value, "\n")
-    
-    # Update removable terms list
-    removable_terms <- removable_terms[removable_terms != term_to_remove]
-    
-    # Rebuild model with remaining terms
-    remaining_terms <- c(protected_terms, removable_terms)
-    new_formula_str <- paste("DengueCases_sqrt ~", paste(remaining_terms, collapse = " + "))
-    new_formula <- as.formula(new_formula_str)
-    
-    current_model <- glm(new_formula, family = quasipoisson(), data = df)
-  }
-  
-  return(current_model)
-}
-
-# Apply the manual elimination
-final_model <- manual_backward_elimination(model, alpha = 0.05)
-summary(final_model)
-```
-
-```{r}
-# Deviance of the model
-deviance_val <- deviance(model)
-
-# Number of parameters (including intercept)
-num_params <- length(coef(model))
-
-# Compute qAIC manually: qAIC = Deviance + 2 * Number of Parameters
-qAIC_value <- deviance_val + 2 * num_params
-
-# Print the qAIC
-print(qAIC_value)
-```
-
-```{r}
-# Step 1: Extract fitted values and observed values
-mu_hat <- fitted(model)
-y <- model$y
-
-# Step 2: Compute quasi-likelihood
-Q <- sum(y * log(mu_hat) - mu_hat)
-
-# Step 3: Count number of estimated parameters
-p <- length(coef(model))
-
-# Step 4: Compute qAIC
-qAIC <- -2 * Q + 2 * p
-
-# Print result
-qAIC
-```
-
-
-```{r}
-dispersion <- summary(model)$dispersion
-deviance <- model$deviance
-edf <- length(coef(model))  # number of parameters
-
-qloglik <- -deviance / (2 * dispersion)
-qAIC <- -2 * qloglik + 2 * edf
-qAIC
-
-```
-
-
-
-```{r}
-# Initialize minimum qAIC and best parameters
-min_qAIC <- Inf
-best_params <- list()
-
-# Loop over all combinations
-for (Mlag in 26:34) {
-  for (Mdof in 2:3) {
-    for (Mknots in 2:3) {
-      for (Plag in 6:12) {
-        for (Pdof in 2:3) {
-          for (Pknots in 2:3) {
-            # Try-catch block in case model fitting fails for some combinations
-            try({
-              # Crossbasis for meteorological variables
-              # cb_HeatWaveDays <- crossbasis(df$HeatWaveDays, lag=Mlag,
-              #                               argvar=list(fun="ns", df=Mdof),
-              #                               arglag=list(fun="ns", knots=Mknots))
-              cb_MeanT <- crossbasis(df$MeanT, lag=Mlag,
-                                    argvar=list(fun="ns", df=Mdof),
-                                    arglag=list(fun="ns", knots=Mknots))
-              cb_AvgHum <- crossbasis(df$AvgHum, lag=Mlag,
-                                      argvar=list(fun="ns", df=Mdof),
-                                      arglag=list(fun="ns", knots=Mknots))
-              cb_WindSp_mph <- crossbasis(df$WindSp_mph, lag=Mlag,
-                                          argvar=list(fun="ns", df=Mdof),
-                                          arglag=list(fun="ns", knots=Mknots))
-              cb_TotalRain_log <- crossbasis(df$TotalRain_log, lag=Mlag,
-                                        argvar=list(fun="ns", df=Mdof),
-                                        arglag=list(fun="ns", knots=Mknots))
-
-              # Crossbasis for pollution variables
-              cb_SO2_log <- crossbasis(df$SO2_log, lag=Plag,
-                                       argvar=list(fun="ns", df=Pdof),
-                                       arglag=list(fun="ns", knots=Pknots))
-              cb_NO2_log <- crossbasis(df$NO2_log, lag=Plag,
-                                        argvar=list(fun="ns", df=Pdof),
-                                        arglag=list(fun="ns", knots=Pknots))
-              cb_NO_log <- crossbasis(df$NO_log, lag=Plag,
-                                        argvar=list(fun="ns", df=Pdof),
-                                        arglag=list(fun="ns", knots=Pknots))
-              cb_CO_log <- crossbasis(df$CO_sqrt, lag=Plag,
-                                       argvar=list(fun="ns", df=Pdof),
-                                       arglag=list(fun="ns", knots=Pknots))
-              cb_O3_log <- crossbasis(df$O3_log, lag=Plag,
-                                      argvar=list(fun="ns", df=Pdof),
-                                      arglag=list(fun="ns", knots=Pknots))
-              cb_PM25_log <- crossbasis(df$PM25_sqrt, lag=Plag,
-                                         argvar=list(fun="ns", df=Pdof),
-                                         arglag=list(fun="ns", knots=Pknots))
-
-              # Fit the model
-              model <- glm(DengueCases ~  cb_MeanT + cb_AvgHum + 
-                             cb_WindSp_mph + cb_TotalRain_log +
-                             cb_SO2_log + cb_NO2_log + cb_NO_log +
-                             cb_CO_log +
-                             cb_O3_log + cb_PM25_log +
-                             ns(DOS, df=3*9) + factor(Month) + factor(DOW) +
-                             factor(Holiday) + offset(log(Population)), family=quasipoisson(),
-                           data=df)
-
-              # Calculate qAIC
-              # deviance_val <- deviance(model)
-              # num_params <- length(coef(model))
-              # qAIC_value <- deviance_val + 2 * num_params
-              
-              dispersion <- summary(model)$dispersion
-              deviance <- model$deviance
-              edf <- length(coef(model))  # number of parameters
-
-              qloglik <- -deviance / (2 * dispersion)
-              qAIC_value <- -2 * qloglik + 2 * edf
-
-
-              # Update min_qAIC if a new lower value is found
-              if (qAIC_value < min_qAIC) {
-                min_qAIC <- qAIC_value
-                best_params <- list(Mlag=Mlag, Mdof=Mdof, Mknots=Mknots,
-                                    Plag=Plag, Pdof=Pdof, Pknots=Pknots,
-                                    qAIC=min_qAIC)
-              }
-            }, silent=TRUE)
-          }
-        }
-      }
-    }
-  }
-}
-
-# Output best parameters and corresponding minimum qAIC
-print(best_params)
-
-```
-$Mlag
-[1] 34
-
-$Mdof
-[1] 3
-
-$Mknots
-[1] 2
-
-$Plag
-[1] 12
-
-$Pdof
-[1] 3
-
-$Pknots
-[1] 2
-
-$qAIC
-[1] 5070.754
-
-
-```{r}
-# Initialize minimum qAIC and best parameters
-min_qAIC <- Inf
-best_params <- list()
-
-# Grid search over crossbasis parameters
-for (Mlag in 26:34) {
-  for (Mdof in 2:3) {
-    for (Mknots in 2:3) {
-      for (Plag in 6:12) {
-        for (Pdof in 2:3) {
-          for (Pknots in 2:3) {
-
-            # Log current parameter combination
-            cat("Trying: Mlag =", Mlag, 
-                "Mdof =", Mdof, "Mknots =", Mknots,
-                "Plag =", Plag, "Pdof =", Pdof, "Pknots =", Pknots, "\n")
-
-            try({
-              # Create crossbasis terms for meteorological variables
-              cb_HeatWaveDays <- crossbasis(df$HeatWaveDays, lag=Mlag,
-                                            argvar=list(fun="ns", df=Mdof),
-                                            arglag=list(fun="ns", knots=Mknots))
-              cb_MeanT <- crossbasis(df$MeanT, lag=Mlag,
-                                    argvar=list(fun="ns", df=Mdof),
-                                    arglag=list(fun="ns", knots=Mknots))
-              cb_AvgHum <- crossbasis(df$AvgHum, lag=Mlag,
-                                      argvar=list(fun="ns", df=Mdof),
-                                      arglag=list(fun="ns", knots=Mknots))
-              cb_WindSp_mph <- crossbasis(df$WindSp_mph, lag=Mlag,
-                                          argvar=list(fun="ns", df=Mdof),
-                                          arglag=list(fun="ns", knots=Mknots))
-
-              # Crossbasis for pollution variables
-              cb_SO2_log <- crossbasis(df$SO2_log, lag=Plag,
-                                       argvar=list(fun="ns", df=Pdof),
-                                       arglag=list(fun="ns", knots=Pknots))
-              cb_CO_sqrt <- crossbasis(df$CO_sqrt, lag=Plag,
-                                       argvar=list(fun="ns", df=Pdof),
-                                       arglag=list(fun="ns", knots=Pknots))
-              cb_O3_log <- crossbasis(df$O3_log, lag=Plag,
-                                      argvar=list(fun="ns", df=Pdof),
-                                      arglag=list(fun="ns", knots=Pknots))
-              cb_PM25_sqrt <- crossbasis(df$PM25_sqrt, lag=Plag,
-                                         argvar=list(fun="ns", df=Pdof),
-                                         arglag=list(fun="ns", knots=Pknots))
-
-              # Fit the model
-              model <- glm(DengueCases ~ cb_HeatWaveDays + cb_MeanT + cb_AvgHum +
-                             cb_WindSp_mph +
-                             cb_SO2_log + cb_CO_sqrt + cb_O3_log + cb_PM25_sqrt +
-                             ns(DOS, df=7*6) + factor(Month) + factor(DOW) +
-                             factor(Holiday),
-                           family=quasipoisson(), data=df)
-
-              # Safeguard against log(0)
-              mu_hat <- pmax(fitted(model), 1e-10)
-              y <- model$y
-
-              # Compute quasi-likelihood and qAIC
-              quasi_likelihood <- sum(y * log(mu_hat) - mu_hat)
-              p <- length(coef(model))
-              qAIC_value <- -2 * quasi_likelihood + 2 * p
-
-              cat("   -> qAIC =", qAIC_value, "\n")
-
-              # Update if better
-              if (qAIC_value < min_qAIC) {
-                min_qAIC <- qAIC_value
-                best_params <- list(
-                  Mlag = Mlag, Mdof = Mdof, Mknots = Mknots,
-                  Plag = Plag, Pdof = Pdof, Pknots = Pknots,
-                  qAIC = min_qAIC
-                )
-              }
-            }, silent = TRUE)
-          }
-        }
-      }
-    }
-  }
-}
-
-# Output the best parameters
-cat("\nBest Parameters Found:\n")
-print(best_params)
-
-
-```
-
-
 
 ```{r}
 AIC(model)
@@ -1011,7 +401,7 @@ df_adj$lag_residuals24 <- lag(residuals, 24)
 df_adj$lag_residuals25 <- lag(residuals, 25)
 ```
 
-```{r}
+```{r} #finidng the optimized lagged residual
 library(MASS)     # for glm.nb
 library(lmtest)   # for dwtest
 library(splines)
@@ -1106,7 +496,7 @@ for (n_lags in 1:max_lags) {
                            argvar=list(fun="ns", df=Pdof),
                            arglag=list(fun="ns", df=Pknots))
   
-  # Add week index
+  # Add DOS index
   df_temp$DOS <- seq_len(nrow(df_temp)) 
   
   # Construct lagged residual terms in model formula
@@ -1235,49 +625,6 @@ cb_PM25_sqrt_adj <- crossbasis(df_adj$PM25_sqrt, lag = Plag,
                                arglag = list(fun = "ns", df = Pknots))
 
 
-
-# model_resid_dev <- glm(DengueCases ~ cb_HeatWaveDays_adj +
-#                          cb_MeanT_adj +
-#                          cb_AvgHum_adj +
-#                          cb_WindSp_adj +
-#                          #cb_SolarRad_adj +
-#                          cb_SO2_adj +
-#                          cb_NO2_adj +
-#                          cb_CO_adj +
-#                          cb_O3_adj +
-#                          cb_PM25_adj +
-#                          ns(DOS, df=7*6) + factor(Month) + 
-#                          factor(DOW) +
-#                          factor(Holiday)
-#                        + lag_residuals1
-#                        + lag_residuals2
-#                        + lag_residuals3
-#                        # + lag_residuals4
-#                        # + lag_residuals5
-#                        # + lag_residuals6
-#                        # + lag_residuals7
-#                        # + lag_residuals8
-#                        # + lag_residuals9
-#                        # + lag_residuals10
-#                        # + lag_residuals11
-#                        # + lag_residuals12
-#                        # + lag_residuals13
-#                        # + lag_residuals14
-#                        # + lag_residuals15
-#                        # + lag_residuals16
-#                        # + lag_residuals17
-#                        # + lag_residuals18
-#                        # + lag_residuals19
-#                        # + lag_residuals20
-#                        # + lag_residuals21
-#                        # + lag_residuals22
-#                        # + lag_residuals23
-#                        # + lag_residuals24
-#                        # + lag_residuals25
-#                        ,family=quasipoisson(), data=df_adj)
-
-
-
 model_resid_dev <- glm.nb(DengueCases ~
                          cb_MeanT_adj +
                          # cb_AvgHum_adj +
@@ -1322,32 +669,8 @@ model_resid_dev <- glm.nb(DengueCases ~
 
 
 ```
-<!-- threshold lines (often shown as horizontal dashed blue lines at ±1.96/√n) represent approximate 95% confidence intervals for testing whether a lag is significantly different from zero. -->
-
-
 
 ```{r}
-# # Deviance of the model
-# deviance_val <- deviance(model_resid_dev)
-# 
-# # Number of parameters (including intercept)
-# num_params <- length(coef(model_resid_dev))
-# 
-# # Compute qAIC manually: qAIC = Deviance + 2 * Number of Parameters
-# qAIC_value <- deviance_val + 2 * num_params
-# 
-# # Print the qAIC
-# print(qAIC_value)
-# 
-# dispersion <- summary(model_resid_dev)$dispersion
-# deviance <- model_resid_dev$deviance
-# edf <- length(coef(model_resid_dev))  # number of parameters
-# 
-# qloglik <- -deviance / (2 * dispersion)
-# qAIC <- -2 * qloglik + 2 * edf
-# qAIC
-
-
 AIC(model_resid_dev)
 gvif_values <- vif(model_resid_dev)
 print(gvif_values)
@@ -1361,13 +684,7 @@ acf(residuals, main = "ACF of Deviance Residuals")
 pacf(residuals, main = "PACF of Deviance Residuals")
 
 ```
-<!-- What it means if ACF or PACF values cross the threshold -->
 
-<!--     If a spike crosses the threshold, it suggests that the autocorrelation at that lag is statistically significant at the 5% level. -->
-
-<!--     In other words, the autocorrelation is unlikely to be due to random chance. -->
-
-<!--     This may indicate non-random structure in the residuals, suggesting model inadequacy. -->
 
 ```{r}
 # Compute ACF values without plotting
@@ -1386,162 +703,6 @@ abline(h = c(-1.96/sqrt(length(residuals)), 1.96/sqrt(length(residuals))), col =
 
 ```
 
-
-```{r}
-pred_MeanT <- crosspred(cb_MeanT_adj, model_resid_dev, 
-                  cumul = TRUE, cen = 32, ci.level = 0.95, 
-                  vcov = vcov(model_resid_dev))
-
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/MeanT.tiff", width = 8, height = 5, units = "in", res = 300)
-
-plot(pred_MeanT, "overall", xlab = "Maximum Temp", ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",         # line color
-     main = "Overall Exposure-Response Relationship")
-grid()
-
-```
-
-
-```{r}
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/COPD__MeanT.tiff", width = 10, height = 10, units = "in", res = 300)
-
-par(family = "sans",          # Sans-serif font
-    cex.lab = 1.7,            # Axis title size
-    font.lab = 2,             # Axis title font style (plain)
-    las = 1,                  # Label orientation
-    font.axis = 1,            # Axis tick font (plain)
-    cex.axis = 1.2,           # Tick label size
-    mgp = c(100, 100, 100),        # Push axis titles and labels far away
-    mar = c(3, 3, 2, 1),
-    tck = 1,
-    xaxs = "i",
-    xaxt = "n",
-    lab = c(5, 5, 7)
-    )        
-
-plot(pred_MeanT, "3d", 
-     xlab = "Maximum Temperature", 
-     ylab = "Lag (Days)", 
-     zlab = "RR", 
-     col = "white",
-     shade = .7,
-     lwd = 1,
-     lty = 1
-     # ,theta =675
-     # , phi = 50
-     )
-
-```
-
-
-```{r}
-# Install and load the necessary libraries
-install.packages("plotly")
-library(plotly)
-
-# Cross-prediction from dlnm
-pred_MeanT <- crosspred(cb_MeanT_adj, model_resid_dev, 
-                        cumul = TRUE, cen = 32, ci.level = 0.95, 
-                        vcov = vcov(model_resid_dev))
-
-# Example: Extract the values for x, y, and z (for plotting)
-x <- pred_MeanT$argvar  # This is the temperature (Max Temp) values
-y <- pred_MeanT$arglag  # This is the lag (Days) values
-z <- pred_MeanT$z      # These are the Relative Risk (RR) values
-
-# Create a matrix of z values to plot the surface
-Z_matrix <- matrix(z, nrow = length(x), byrow = TRUE)
-
-# Split the surface into upper and lower based on a condition (e.g., z > 1 or z <= 1)
-z_upper <- ifelse(Z_matrix > 1, Z_matrix, NA)  # Upper surface (RR > 1)
-z_lower <- ifelse(Z_matrix <= 1, Z_matrix, NA)  # Lower surface (RR <= 1)
-
-# Create the plotly 3D plot
-fig <- plot_ly() %>%
-  
-  # Upper surface (where RR > 1) with one color
-  add_surface(x = x, y = y, z = z_upper, colorscale = list(c(0, 1), c('white', 'blue')), opacity = 0.7) %>%
-  
-  # Lower surface (where RR <= 1) with another color
-  add_surface(x = x, y = y, z = z_lower, colorscale = list(c(0, 1), c('white', 'red')), opacity = 0.7) %>%
-  
-  # Set axis labels and the plot title
-  layout(scene = list(
-    xaxis = list(title = 'Maximum Temperature'),
-    yaxis = list(title = 'Lag (Days)'),
-    zaxis = list(title = 'Relative Risk (RR)')
-  ), 
-  title = "3D Surface Plot with Upper and Lower Surfaces Colored Differently")
-
-# Show the plot
-fig
-
-```
-
-
-```{r}
-pred_AvgHum <- crosspred(cb_AvgHum_adj, model_resid_dev, 
-                  cumul = TRUE, cen = 65, ci.level = 0.95, 
-                  vcov = vcov(model_resid_dev))
-
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/AvgHum_Overall.tiff", width = 8, height = 5, units = "in", res = 300)
-
-plot(pred_AvgHum, "overall", xlab = "Avg Hum", ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",         # line color
-     main = "Overall Exposure-Response Relationship")
-grid()
-```
-
-
-```{r}
-pred_TotalRain <- crosspred(cb_TotalRain, model_resid_dev, 
-                  at = seq(0, 150, by=0.1), 
-                  cumul = TRUE, cen = 50, ci.level = 0.95, 
-                  vcov = vcov(model))
-
-plot(pred_TotalRain, "overall", xlab = "TotalRain_log", ylab = "RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",         # line color
-     main = "Overall Exposure-Response Relationship")
-grid()
-```
-
-
-```{r}
-pred_WindSp_mph  <- crosspred( cb_WindSp_adj , model_resid_dev, 
-                  cumul = TRUE, cen = 3, ci.level = 0.95, 
-                  vcov = vcov(model_resid_dev))
-
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/WindSp.tiff", width = 8, height = 5, units = "in", res = 300)
-
-plot(pred_WindSp_mph, "overall", xlab = "WindSp_mph", ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",         # line color
-     main = "Overall Exposure-Response Relationship")
-grid()
-```
-
-
-```{r}
-pred_SolarRad   <- crosspred( cb_SolarRad_adj , model_resid_dev, 
-                  cumul = TRUE, cen = 200, ci.level = 0.95, 
-                  vcov = vcov(model_resid_dev))
-
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/SolarRad.tiff", width = 8, height = 5, units = "in", res = 300)
-
-plot(pred_SolarRad, "overall", xlab = "SolarRad", ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",         # line color
-     main = "Overall Exposure-Response Relationship")
-grid()
-```
 
 
 # #############SO2#############
@@ -1567,7 +728,7 @@ significant <- (rr_lower > 1) | (rr_upper < 1)
 
 ```{r}
 # Create contour plot
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/Contour/SO2.tiff",
+tiff("path/SO2.tiff",
   width = 9,
   height = 5,
   units = "in",
@@ -1578,24 +739,7 @@ plot(pred_SO2_log, "contour", xlab = "Log(SO2)", ylab = "Lag (Day)",
      key.title = title("RR")
      # , main = "Title"
      )
-
-# temp_vals <- as.numeric(rownames(significant))
-# lag_vals  <- as.numeric(gsub("lag", "", colnames(significant)))
-# 
-# grid <- expand.grid(
-#   temp = temp_vals,
-#   lag  = lag_vals
-# )
-# 
-# sig_points <- grid[as.vector(significant), ]
-# 
-# 
-# points(sig_points$temp, sig_points$lag,
-#        pch = "┼",        # plus sign
-#        col = "black",
-#        lwd = 0.1,
-#        cex = 0.3)
-
+  
 ```
 
 
@@ -1605,7 +749,7 @@ pred_SO2_log    <- crosspred( cb_SO2_log_adj  , model_resid_dev,
                   vcov = vcov(model_resid_dev))
 
 
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/Cum RR/SO2_log.tiff", width = 8, height = 5, units = "in", res = 300)
+tiff("path/SO2_log.tiff", width = 8, height = 5, units = "in", res = 300)
 
 
 plot(pred_SO2_log, "overall", xlab = "SO2_log", ylab = "Cumulative RR", 
@@ -1616,6 +760,8 @@ plot(pred_SO2_log, "overall", xlab = "SO2_log", ylab = "Cumulative RR",
      )
 grid()
 ```
+
+
 ```{r}
 # Extract RR values and CIs
 RR_values <- pred_SO2_log$allRRfit
@@ -1636,12 +782,6 @@ RR_table <- data.frame(
 RR_table
 
 ```
-
-```{r}
-write.csv(RR_table, "RR_table.csv", row.names = FALSE)
-getwd() 
-```
-
 
 
 ```{r}
@@ -1665,7 +805,7 @@ pred_SO2    <- crosspred(cb_SO2_adj, model_resid_dev,
                   cumul = TRUE, cen = 8, ci.level = 0.95, 
                   vcov = vcov(model_resid_dev))
 
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/SO2.tiff", width = 8, height = 5, units = "in", res = 300)
+#tiff("path/SO2.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_SO2, "overall", xlab = "SO2", ylab = "Cumulative RR", 
      type = "l",           # line plot
@@ -1701,7 +841,7 @@ significant <- (rr_lower > 1) | (rr_upper < 1)
 
 ```{r}
 # Create contour plot
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/Contour/NO2.tiff",
+tiff("path/NO2.tiff",
   width = 9,
   height = 5,
   units = "in",
