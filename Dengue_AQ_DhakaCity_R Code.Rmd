@@ -852,23 +852,6 @@ plot(pred_NO2_log, "contour", xlab = "Log(NO2)", ylab = "Lag (Day)",
      key.title = title("RR")
      # , main = "Title"
      )
-# 
-# temp_vals <- as.numeric(rownames(significant))
-# lag_vals  <- as.numeric(gsub("lag", "", colnames(significant)))
-# 
-# grid <- expand.grid(
-#   temp = temp_vals,
-#   lag  = lag_vals
-# )
-# 
-# sig_points <- grid[as.vector(significant), ]
-# 
-# 
-# points(sig_points$temp, sig_points$lag,
-#        pch = "┼",        # plus sign
-#        col = "black",
-#        lwd = 0.1,
-#        cex = 0.3)
 
 ```
 
@@ -878,7 +861,7 @@ pred_NO2_log    <- crosspred( cb_NO2_log_adj  , model_resid_dev,
                   vcov = vcov(model_resid_dev))
 
 
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/Cum RR/NO2_log.tiff", width = 8, height = 5, units = "in", res = 300)
+tiff("path/NO2_log.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_NO2_log, "overall", xlab = "NO2_log", ylab = "Cumulative RR", 
      type = "l",           # line plot
@@ -903,6 +886,8 @@ for (n in n_values) {
   cat("RR for", n, "SO2:",RR_values,"(95% CI:",CI_low,",", CI_high,")\n\n")
 }
 ```
+
+
 ```{r}
 # Extract RR values and CIs
 RR_values <- pred_NO2_log$allRRfit
@@ -930,7 +915,7 @@ pred_NO2 <- crosspred(cb_NO2_adj, model_resid_dev,
                       cumul = TRUE, cen = 16, ci.level = 0.95, 
                       vcov = vcov(model_resid_dev))
 
-# tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/NO2_sqrt.tiff", width = 8, height = 5, units = "in", res = 300)
+# tiff("path/NO2_sqrt.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_NO2, "overall", xlab = "NO2", ylab = "Cumulative RR", 
      type = "l",           # line plot
@@ -948,7 +933,7 @@ pred_NO_log    <- crosspred( cb_NO_log_adj  , model_resid_dev,
                   vcov = vcov(model_resid_dev))
 
 
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/NO_log.tiff", width = 8, height = 5, units = "in", res = 300)
+#tiff("path/NO_log.tiff", width = 8, height = 5, units = "in", res = 300)
 
 
 plot(pred_NO_log, "overall", xlab = "NO_log", ylab = "Cumulative RR", 
@@ -983,7 +968,7 @@ significant <- (rr_lower > 1) | (rr_upper < 1)
 
 ```{r}
 # Create contour plot
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/Contour/CO.tiff",
+tiff("path/CO.tiff",
   width = 9,
   height = 5,
   units = "in",
@@ -994,24 +979,6 @@ plot(pred_CO_log, "contour", xlab = "Log(CO)", ylab = "Lag (Day)",
      key.title = title("RR")
      # , main = "Title"
      )
-# 
-# temp_vals <- as.numeric(rownames(significant))
-# lag_vals  <- as.numeric(gsub("lag", "", colnames(significant)))
-# 
-# grid <- expand.grid(
-#   temp = temp_vals,
-#   lag  = lag_vals
-# )
-# 
-# sig_points <- grid[as.vector(significant), ]
-# 
-# 
-# points(sig_points$temp, sig_points$lag,
-#        pch = "┼",        # plus sign
-#        col = "black",
-#        lwd = 0.1,
-#        cex = 0.3)
-
 ```
 
 ```{r}
@@ -1020,7 +987,7 @@ pred_CO_log    <- crosspred( cb_CO_log_adj  , model_resid_dev,
                   vcov = vcov(model_resid_dev))
 
 
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/Cum RR/CO.tiff", width = 8, height = 5, units = "in", res = 300)
+tiff("path/CO.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_CO_log, "overall", xlab = "CO_log", ylab = "Cumulative RR", 
      type = "l",           # line plot
@@ -1071,7 +1038,7 @@ pred_CO    <- crosspred( cb_CO_adj  , model_resid_dev,
                   vcov = vcov(model_resid_dev))
 
 
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/CO.tiff", width = 8, height = 5, units = "in", res = 300)
+#tiff("path/CO.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_CO, "overall", xlab = "CO", ylab = "Cumulative RR", 
      type = "l",           # line plot
@@ -1103,7 +1070,7 @@ significant <- (rr_lower > 1) | (rr_upper < 1)
 
 ```{r}
 # Create contour plot
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/Contour/O3.tiff",
+tiff("path/O3.tiff",
   width = 9,
   height = 5,
   units = "in",
@@ -1114,23 +1081,6 @@ plot(pred_O3_log, "contour", xlab = "Log(O3)", ylab = "Lag (Day)",
      key.title = title("RR")
      # , main = "Title"
      )
-# 
-# temp_vals <- as.numeric(rownames(significant))
-# lag_vals  <- as.numeric(gsub("lag", "", colnames(significant)))
-# 
-# grid <- expand.grid(
-#   temp = temp_vals,
-#   lag  = lag_vals
-# )
-# 
-# sig_points <- grid[as.vector(significant), ]
-# 
-# 
-# points(sig_points$temp, sig_points$lag,
-#        pch = "┼",        # plus sign
-#        col = "black",
-#        lwd = 0.1,
-#        cex = 0.3)
 
 ```
 
@@ -1139,7 +1089,7 @@ pred_O3_log   <- crosspred( cb_O3_log_adj, model_resid_dev,
                   cumul = TRUE, cen = 1.9, ci.level = 0.95, 
                   vcov = vcov(model_resid_dev))
 
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/Cum RR/O3.tiff", width = 8, height = 5, units = "in", res = 300)
+tiff("path/O3.tiff", width = 8, height = 5, units = "in", res = 300)
 
 
 plot(pred_O3_log, "overall", xlab = "O3_log", ylab = "Cumulative RR", 
@@ -1150,6 +1100,7 @@ plot(pred_O3_log, "overall", xlab = "O3_log", ylab = "Cumulative RR",
      )
 grid()
 ```
+
 
 ```{r}
 # Extract RR values and CIs
@@ -1193,7 +1144,7 @@ pred_O3   <- crosspred(cb_O3_adj, model_resid_dev,
                        cumul = TRUE, cen = 10, ci.level = 0.95, 
                        vcov = vcov(model_resid_dev))
 
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/O3.tiff", width = 8, height = 5, units = "in", res = 300)
+#tiff("path/O3.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_O3, "overall", 
      xlab = "O3", 
@@ -1227,7 +1178,7 @@ significant <- (rr_lower > 1) | (rr_upper < 1)
 
 ```{r}
 # Create contour plot
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/Contour/PM25.tiff",
+tiff("path/PM25.tiff",
   width = 9,
   height = 5,
   units = "in",
@@ -1238,23 +1189,6 @@ plot(pred_PM25_log, "contour", xlab = "Log(PM25)", ylab = "Lag (Day)",
      key.title = title("RR")
      # , main = "Title"
      )
-# 
-# temp_vals <- as.numeric(rownames(significant))
-# lag_vals  <- as.numeric(gsub("lag", "", colnames(significant)))
-# 
-# grid <- expand.grid(
-#   temp = temp_vals,
-#   lag  = lag_vals
-# )
-# 
-# sig_points <- grid[as.vector(significant), ]
-# 
-# 
-# points(sig_points$temp, sig_points$lag,
-#        pch = "┼",        # plus sign
-#        col = "black",
-#        lwd = 0.1,
-#        cex = 0.3)
 
 ```
 
@@ -1264,7 +1198,7 @@ pred_PM25_log   <- crosspred(cb_PM25_log_adj, model_resid_dev,
                   vcov = vcov(model_resid_dev))
 
 
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/Cum RR/PM25_log.tiff", width = 8, height = 5, units = "in", res = 300)
+tiff("path/PM25_log.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_PM25_log, "overall", xlab = "PM2.5_log", ylab = "Cumulative RR", 
      type = "l",           # line plot
@@ -1317,7 +1251,7 @@ pred_PM25 <- crosspred(cb_PM25_adj, model_resid_dev,
                        cumul = TRUE, cen = 3.6, ci.level = 0.95, 
                        vcov = vcov(model_resid_dev))
 
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Overall/PM25.tiff", width = 8, height = 5, units = "in", res = 300)
+#tiff("path/PM25.tiff", width = 8, height = 5, units = "in", res = 300)
 
 plot(pred_PM25, "overall", 
      xlab = "PM2.5", 
@@ -1333,7 +1267,7 @@ grid()
 
 
 ```{r}
-#tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/COPD_PM25.tiff", width = 10, height = 10, units = "in", res = 300)
+#tiff("path/PM25.tiff", width = 10, height = 10, units = "in", res = 300)
 
 
 par(family = "sans",          # Sans-serif font
@@ -1363,221 +1297,10 @@ plot(pred_PM25_sqrt, "3d",
      )
 ```
 
-```{r}
-# tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Combined_ns7_met.tiff", width = 8, height = 5, units = "in", res = 300)
-
-# Set up the plotting area to have 2 rows and 3 columns
-par(mfrow = c(2, 2), mar = c(5, 5, 2, 1))  # Adjust margins as needed
-
-# Plot for pred
-# plot(pred, "overall",
-#      xlab = "log(Cons. Heatwave Days)",
-#      ylab = "Cumulative RR",
-#      type = "l",           # line plot
-#      lwd = 2,              # line width
-#      col = "darkred",      # line color
-#      lty = 1,
-#      cex.lab = 1.2,        # Increase label size
-#      cex.axis = 1.2,       # Increase axis tick size
-#      font.lab = 2,         # Bold labels
-#      font.axis = 1,        # Plain axis text
-#      col.lab = "black", # Label color
-#      col.axis = "black",   # Axis color
-#      # main = "Overall Exposure–Response Relationship"
-# )
-
-# Plot for pred_MeanT
-plot(pred_MeanT, "overall", 
-     xlab = "Maximum Temp", 
-     ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",      # line color
-     cex.lab = 1.2,        # Increase label size
-     cex.axis = 1.2,       # Increase axis tick size
-     font.lab = 2,         # Bold labels
-     font.axis = 1,        # Plain axis text
-     col.lab = "black", # Label color
-     col.axis = "black",   # Axis color
-)
-
-# Plot for pred_AvgHum
-plot(pred_AvgHum, "overall", 
-     xlab = "Avg Hum", 
-     ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",      # line color
-     cex.lab = 1.2,        # Increase label size
-     cex.axis = 1.2,       # Increase axis tick size
-     font.lab = 2,         # Bold labels
-     font.axis = 1,        # Plain axis text
-     col.lab = "black", # Label color
-     col.axis = "black",   # Axis color
-)
-
-# Plot for pred_TotalRain_log
-plot(pred_TotalRain_log, "overall", 
-     xlab = "TotalRain_log", 
-     ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",      # line color
-     cex.lab = 1.2,        # Increase label size
-     cex.axis = 1.2,       # Increase axis tick size
-     font.lab = 2,         # Bold labels
-     font.axis = 1,        # Plain axis text
-     col.lab = "black", # Label color
-     col.axis = "black",   # Axis color
-)
-
-# Plot for pred_WindSp_mph
-plot(pred_WindSp_mph, "overall", 
-     xlab = "WindSp_mph", 
-     ylab = "Cumulative RR", 
-     type = "l",           # line plot
-     lwd = 2,              # line width
-     col = "darkred",      # line color
-     cex.lab = 1.2,        # Increase label size
-     cex.axis = 1.2,       # Increase axis tick size
-     font.lab = 2,         # Bold labels
-     font.axis = 1,        # Plain axis text
-     col.lab = "black", # Label color
-     col.axis = "black",   # Axis color
-)
-
-# Plot for pred_SolarRad
-# plot(pred_SolarRad, "overall", 
-#      xlab = "SolarRad", 
-#      ylab = "Cumulative RR", 
-#      type = "l",           # line plot
-#      lwd = 2,              # line width
-#      col = "darkred",      # line color
-#      cex.lab = 1.2,        # Increase label size
-#      cex.axis = 1.2,       # Increase axis tick size
-#      font.lab = 2,         # Bold labels
-#      font.axis = 1,        # Plain axis text
-#      col.lab = "black", # Label color
-#      col.axis = "black",   # Axis color
-# )
-
-```
 
 
 ```{r}
-tiff("C:/Users/aunko/OneDrive - Military Institute of Science and Technology (MIST)/Desktop/Personal/Paper/Air Quality_COPD_DLNM/Outputs/R_plots/Combined_ns3_3D_met.tiff", width = 20, height = 13.3, units = "in", res = 300)
-
-# Set up the plotting area to have 2 rows and 3 columns
-par(mfrow = c(2, 2), mar = c(6, 5, 2, 1), mgp = c(5, 4, 0))  # Adjust margins as needed
-
-# Plot for pred (with 3d style)
-# plot(pred, "3d", 
-#      xlab = "log(Cons. Heatwave Days)",
-#      ylab = "Lag (days)",   # Updated y-label
-#      zlab = "RR",           # Updated z-label
-#      lwd = 1,               # line width
-#      col = "white",         # line color
-#      shade = 0.7,           # Updated shading parameter
-#      lty = 1,               # line type
-#      cex.lab = 2,           # Increased label size
-#      cex.axis = 2.2,          # Increased axis tick size
-#      font.lab = 2,          # Bold labels
-#      font.axis = 1,         # Plain axis text
-#      col.lab = "black",     # Label color
-#      col.axis = "black"     # Axis color
-# )
-
-# Plot for pred_MeanT (with 3d style)
-plot(pred_MeanT, "3d", 
-     xlab = "Maximum Temp", 
-     ylab = "Lag (days)",   # Updated y-label
-     zlab = "RR",           # Updated z-label
-     lwd = 1,               # line width
-     col = "white",         # line color
-     shade = 0.7,           # Updated shading parameter
-     lty = 1,               # line type
-     cex.lab = 2.2,           # Increased label size
-     cex.axis = 2,          # Increased axis tick size
-     font.lab = 2,          # Bold labels
-     font.axis = 1,         # Plain axis text
-     col.lab = "black",     # Label color
-     col.axis = "black"     # Axis color
-)
-
-# Plot for pred_AvgHum (with 3d style)
-plot(pred_AvgHum, "3d", 
-     xlab = "Avg Hum", 
-     ylab = "Lag (days)",   # Updated y-label
-     zlab = "RR",           # Updated z-label
-     lwd = 1,               # line width
-     col = "white",         # line color
-     shade = 0.7,           # Updated shading parameter
-     lty = 1,               # line type
-     cex.lab = 2.2,           # Increased label size
-     cex.axis = 2,          # Increased axis tick size
-     font.lab = 2,          # Bold labels
-     font.axis = 1,         # Plain axis text
-     col.lab = "black",     # Label color
-     col.axis = "black"     # Axis color
-)
-
-# Plot for pred_TotalRain_log (with 3d style)
-plot(pred_TotalRain_log, "3d", 
-     xlab = "TotalRain_log", 
-     ylab = "Lag (days)",   # Updated y-label
-     zlab = "RR",           # Updated z-label
-     lwd = 1,               # line width
-     col = "white",         # line color
-     shade = 0.7,           # Updated shading parameter
-     lty = 1,               # line type
-     cex.lab = 2.2,           # Increased label size
-     cex.axis = 2,          # Increased axis tick size
-     font.lab = 2,          # Bold labels
-     font.axis = 1,         # Plain axis text
-     col.lab = "black",     # Label color
-     col.axis = "black"     # Axis color
-)
-
-# Plot for pred_WindSp_mph (with 3d style)
-plot(pred_WindSp_mph, "3d", 
-     xlab = "WindSp_mph", 
-     ylab = "Lag (days)",   # Updated y-label
-     zlab = "RR",           # Updated z-label
-     lwd = 1,               # line width
-     col = "white",         # line color
-     shade = 0.7,           # Updated shading parameter
-     lty = 1,               # line type
-     cex.lab = 2.2,           # Increased label size
-     cex.axis = 2,          # Increased axis tick size
-     font.lab = 2,          # Bold labels
-     font.axis = 1,         # Plain axis text
-     col.lab = "black",     # Label color
-     col.axis = "black"     # Axis color
-)
-
-# Plot for pred_SolarRad (with 3d style)
-# plot(pred_SolarRad, "3d", 
-#      xlab = "SolarRad", 
-#      ylab = "Lag (days)",   # Updated y-label
-#      zlab = "RR",           # Updated z-label
-#      lwd = 1,               # line width
-#      col = "white",         # line color
-#      shade = 0.7,           # Updated shading parameter
-#      lty = 1,               # line type
-#      cex.lab = 2.2,           # Increased label size
-#      cex.axis = 2,          # Increased axis tick size
-#      font.lab = 2,          # Bold labels
-#      font.axis = 1,         # Plain axis text
-#      col.lab = "black",     # Label color
-#      col.axis = "black"     # Axis color
-# )
-
-```
-
-
-
-```{r}
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/Contour/Combined_3D.tiff", width = 8, height = 5, units = "in", res = 300)
+tiff("path/Combined_3D.tiff", width = 8, height = 5, units = "in", res = 300)
 
 # Set up the plotting area to have 1 row and 2 columns
 par(mfrow = c(2, 3), mar = c(5, 5, 2, 1))  # Adjust margins as needed
@@ -1675,7 +1398,7 @@ plot(pred_PM25_log, "overall",
 ```
 
 ```{r}
-tiff("C:/Users/ahnaf/Desktop/Personal/MSC/M.Sc. Thesis/Dengue/Air Pollutant_Dengue/Outputs/R_plots/9Mar26/RR/3D/Combined_3D.tiff", width = 20, height = 13.3, units = "in", res = 300)
+tiff("path/Combined_3D.tiff", width = 20, height = 13.3, units = "in", res = 300)
 
 
 # Set up the plotting area to have 2 rows and 3 columns, increase size for better spacing
